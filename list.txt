@@ -1,0 +1,28 @@
+NOP
+JP a16
+CALL a16
+RET
+LD A,d8
+LD B,d8
+LD C,d8
+LD D,d8
+LD E,d8
+LD H,d8
+LD L,d8
+LD BC,d16
+LD DE,d16
+LD HL,d16
+LD A,(a16)
+LD B,(a16)
+LD C,(a16)
+LD D,(a16)
+LD E,(a16)
+LD H,(a16)
+LD L,(a16)
+PUSH BC
+PUSH DE
+PUSH HL
+POP BC
+POP DE
+POP HL
+INC A

@@ -1,0 +1,4 @@
+*.pyc
+*.xxd
+!examples/*.xxd
+examples/*.bin
