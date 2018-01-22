@@ -13,6 +13,14 @@ facing the financial burden of the failure of the Emulak, filed for bankruptcy a
 
 ## How to use the Makefile
 
+Run `make` to make an instruction list from `list.txt` (use when you've made a new opcode and added it to the list)
+
+Run `make test` to run a test using a program. (The test ends when the program enters an infinite loop to the same address)
+
+Run `make debug` to start Emulak in debug mode.
+
+Run `make examples` to make the examples (binary files in `examples/`)
+
 ## Bonus
 
 The way Emulak is implemented is also an FC! Simply subclass `game.BaseGame` and provide your own `init`, `update` and `draw` methods
