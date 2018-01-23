@@ -28,6 +28,8 @@ def import_csv(bpf):
 		r = list(r)
 		r.pop(0)
 		for l in r:
+			if not (len(l)>0):
+				return
 			b = Breakpoint(int(l[0],16))
 			for k in l[1].split("+"):
 				if hasattr(b,k):

@@ -3,3 +3,4 @@
 !examples/*.xxd
 examples/*.bin
 input.bin
+breakpoints.csv
