@@ -1,6 +1,11 @@
 import pygame,core,sys
 # change this to load different setup
 gameclass = core.Emulak
+
+# change this to affect speed
+debug = ("-d" in sys.argv)
+speed = 30000
+
 # initialize game engine
 if __name__=="__main__":
 	pygame.init()
@@ -84,12 +89,19 @@ if __name__=="__main__":
 		else:
 	            events.append(event)
 	    # write game logic here
-	    framecount += 1
-	    framecount = framecount % 2
-	    if framecount==0:
-		game.update(events)
-		while len(events):
-			events.pop()
+	    if debug:
+		    framecount += 1
+		    framecount = framecount % 2
+		    if framecount==0:
+			game.update(events)
+			while len(events):
+				events.pop()
+	    else:
+		    game.update(events)
+		    while len(events):
+			      events.pop()
+		    for i in range(speed-1):
+			game.update([])
 
 	    # clear the screen before drawing
 	    # screen.fill((255, 255, 255))
