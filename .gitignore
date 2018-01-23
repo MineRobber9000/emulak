@@ -2,3 +2,4 @@
 *.xxd
 !examples/*.xxd
 examples/*.bin
+input.bin

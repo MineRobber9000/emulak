@@ -1,4 +1,4 @@
-all: increasea.bin indirectjump1.bin pushhl.bin test.bin
+all: increasea.bin indirectjump1.bin pushhl.bin test.bin gradient.bin
 
 increasea.bin: increasea.xxd
 	xxd -p -r increasea.xxd > increasea.bin
@@ -11,3 +11,6 @@ pushhl.bin: pushhl.xxd
 
 test.bin: test.xxd
 	xxd -p -r test.xxd > test.bin
+
+gradient.bin: gradient.xxd
+	xxd -p -r gradient.xxd > gradient.bin

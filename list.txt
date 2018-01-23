@@ -19,6 +19,7 @@ LD D,(a16)
 LD E,(a16)
 LD H,(a16)
 LD L,(a16)
+LD (a16),a
 PUSH BC
 PUSH DE
 PUSH HL

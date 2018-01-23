@@ -4,7 +4,7 @@ gameclass = core.Emulak
 
 # change this to affect speed
 debug = ("-d" in sys.argv)
-speed = 30000
+speed = 300
 
 # initialize game engine
 if __name__=="__main__":
@@ -91,7 +91,7 @@ if __name__=="__main__":
 	    # write game logic here
 	    if debug:
 		    framecount += 1
-		    framecount = framecount % 2
+		    framecount = framecount % 10
 		    if framecount==0:
 			game.update(events)
 			while len(events):

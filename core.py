@@ -13,6 +13,16 @@ def myhex(n,a=False):
 		return hex(n)[2:].zfill(4)
 	return hex(n)[2:].zfill(2)
 
+def getgrayscalef(n):
+	return (255./n)
+
+def getgrayscale(s,v):
+	n = int(round(s*((v-97)+1)))
+	return (n,n,n)
+
+s = getgrayscalef(26)
+gsp = [getgrayscale(s,v) for v in range(97,123)]
+
 class EmulakMemory:
 	def __init__(self,s=65535):
 		self.memory = [0]*s
@@ -63,6 +73,7 @@ class EmulakCPU:
 		self.memory = memory
 		self.stack = EmulakStack()
 		self.debug = False
+		self.breakpoints = False
 		self.registers = OrderedDict(a=0,b=0,c=0,d=0,e=0,f=0,h=0,l=0)
 		d.import_csv("breakpoints.csv")
 		self.opcodes = dict()
@@ -82,12 +93,13 @@ class EmulakCPU:
 		self.defineOpcode(self.loadDE)
 		self.defineOpcode(self.loadHL)
 		self.defineOpcode(self.loadAIndirect)
-                self.defineOpcode(self.loadBIndirect)
-                self.defineOpcode(self.loadCIndirect)
-                self.defineOpcode(self.loadDIndirect)
-                self.defineOpcode(self.loadEIndirect)
-                self.defineOpcode(self.loadHIndirect)
-                self.defineOpcode(self.loadLIndirect)
+		self.defineOpcode(self.loadBIndirect)
+		self.defineOpcode(self.loadCIndirect)
+		self.defineOpcode(self.loadDIndirect)
+		self.defineOpcode(self.loadEIndirect)
+		self.defineOpcode(self.loadHIndirect)
+		self.defineOpcode(self.loadLIndirect)
+		self.defineOpcode(self.storeA)
 		self.defineOpcode(self.pushBC)
 		self.defineOpcode(self.pushDE)
 		self.defineOpcode(self.pushHL)
@@ -98,6 +110,7 @@ class EmulakCPU:
 
 	def printDebug(self):
 		print("PC: $"+(hex(self.memory.pc)[2:].zfill(4)))
+#		print(hex(self.memory[0x0003])[2:].zfill(2).upper())
 		for i in list("abcdefhl"):
 			print("{}: {}".format(i.upper(),hex(self.registers[i])[2:].zfill(2).upper()),end=" ")
 		print()
@@ -122,8 +135,12 @@ class EmulakCPU:
 		self.opcodes[self.gopcode]=f
 		self.gopcode+=1
 
+	def setBreakpoints(self,bp):
+		self.breakpoints = bp
+
 	def setDebug(self,b):
 		self.debug = b
+		self.setBreakpoints(b)
 
 	def triggerBreakpoint(self,a=0,push=False,cycled=False):
 		if not cycled:
@@ -152,7 +169,7 @@ class EmulakCPU:
 		address = address[::-1]
 #		address = [hex(i)[2:].zfill(2) for i in address]
 #		address = "".join(address)
-		if self.debug:
+		if self.debug or self.breakpoints:
 			if d.is_breakpoint(self.resolveAddress(address),"jump"):
 				self.triggerBreakpoint(self.resolveAddress(address)) # address we were going to jump to
 		self.memory.pc=self.resolveAddress(address)
@@ -163,7 +180,7 @@ class EmulakCPU:
 
 	def returnFromCall(self):
 		a = self.stack.pop()
-		if self.debug:
+		if self.debug or self.breakpoints:
 			if d.is_breakpoint(a,"jump"):
 				self.triggerBreakpoint(a,True) # address we were going to jump to, push it (it's a return)
 		self.memory.pc=a
@@ -226,29 +243,36 @@ class EmulakCPU:
 	def loadAIndirect(self):
 		self.loadreg("a",True)
 
-        """Indirect load B"""
+	"""Indirect load B"""
 	def loadBIndirect(self):
 		self.loadreg("b",True)
 
-        """Indirect load C"""
+	"""Indirect load C"""
 	def loadCIndirect(self):
 		self.loadreg("c",True)
 
-        """Indirect load D"""
+	"""Indirect load D"""
 	def loadDIndirect(self):
 		self.loadreg("d",True)
 
-        """Indirect load E"""
+	"""Indirect load E"""
 	def loadEIndirect(self):
 		self.loadreg("e",True)
 
-        """Indirect load H"""
+	"""Indirect load H"""
 	def loadHIndirect(self):
 		self.loadreg("h",True)
 
-        """Indirect load L"""
+	"""Indirect load L"""
 	def loadLIndirect(self):
 		self.loadreg("l",True)
+
+	def storeA(self):
+		a = self.register("a")
+		address = [self.memory.getProgByte() for i in range(2)]
+		address = address[::-1]
+		address = self.resolveAddress(address)
+		self.memory[address]=a
 
 	def pushreg16(self,r):
 		self.stack.push(self.register(r[0])*0x100+self.register(r[1]))
@@ -286,9 +310,10 @@ class EmulakCPU:
 		self.increase("a")
 
 	def cycle(self):
-		if self.debug:
+		if self.breakpoints:
 			if d.is_breakpoint(self.memory.pc,"execute"):
 				self.triggerBreakpoint(None,False,True) # no address, don't push, is an execute breakpoint
+		if self.debug:
 			self.printDebug()
 		opcode = self.memory.getProgByte()
 		if self.debug:
@@ -319,10 +344,14 @@ class Emulak(BaseGame):
 		#self.memory.pc = 24576
 		self.cpu = EmulakCPU(self.memory)
 		# handle arguments
-		self.ap.add_argument("--debug","-d",action="store_true",help="Shows debug information.")
+		self.ap.add_argument("--debug","-d",action="store_true",help="Shows debug information. Implies -b.")
+		self.ap.add_argument("--breakpoints","-b",action="store_true",help="Stops the emulator when a breakpoint is triggered.")
 
 	def handleArguments(self):
-		self.cpu.setDebug(self.args.debug)
+		if self.args.debug:
+			self.cpu.setDebug(self.args.debug)
+		if self.args.breakpoints:
+			self.cpu.setBreakpoints(self.args.breakpoints)
 
 	def plotPixel(self,l,c):
 		l = [n*self.SCALE_FACTOR for n in l]
@@ -340,6 +369,9 @@ class Emulak(BaseGame):
 			if self.memory[0x0002]==1:
 				self.delayframes=self.memory[0x0001]
 				self.memory[0x0002]=0
+		if self.memory[0x0003]!=0 and (self.memory[0x0003]>=97 and self.memory[0x0003]<=122):
+			self.plotPixel((2,0),gsp[self.memory[0x0003]-97])
+			self.memory[0x0003]=0
 		return
 
 	"""Called every frame."""

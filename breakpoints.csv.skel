@@ -1,0 +1,4 @@
+Address,Types
+0000,read
+0001,write
+0005,jump+execute
