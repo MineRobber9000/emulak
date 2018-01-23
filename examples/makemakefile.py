@@ -12,6 +12,7 @@ if filename == "start":
 	sys.exit(0)
 
 name,ext = os.path.splitext(filename)
+ext = ext[1:]
 
 with open("Makefile","a") as f:
 	f.write("\n")

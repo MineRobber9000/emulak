@@ -21,7 +21,10 @@ def getgrayscale(s,v):
 	return (n,n,n)
 
 s = getgrayscalef(26)
-gsp = [getgrayscale(s,v) for v in range(97,123)]
+gsp = [getgrayscale(s,v) for v in range(122,98,-1)]
+black = len(gsp)-1
+red = len(gsp)
+gsp.append((255,0,0))
 
 class EmulakMemory:
 	def __init__(self,s=65535):
@@ -107,6 +110,7 @@ class EmulakCPU:
 		self.defineOpcode(self.popDE)
 		self.defineOpcode(self.popHL)
 		self.defineOpcode(self.increaseA)
+		self.defineOpcode(self.subtract)
 
 	def printDebug(self):
 		print("PC: $"+(hex(self.memory.pc)[2:].zfill(4)))
@@ -309,6 +313,9 @@ class EmulakCPU:
 	def increaseA(self):
 		self.increase("a")
 
+	def subtract(self):
+		self.register("a",self.register("a")-self.memory.getProgByte())
+
 	def cycle(self):
 		if self.breakpoints:
 			if d.is_breakpoint(self.memory.pc,"execute"):
@@ -320,6 +327,15 @@ class EmulakCPU:
 			print(self.opcodes[opcode].func_name)
 		self.opcodes[opcode]()
 
+def m(l):
+	if len(l)>1:
+		return l[0]*m(l[1:])
+	else:
+		return l[0]*1
+
+def xy(c,r):
+	return (c%r[0],c/r[0])
+
 class Emulak(BaseGame):
 
 	SCALE_FACTOR = 16
@@ -327,18 +343,30 @@ class Emulak(BaseGame):
 	def resolution(self):
 		return (480/self.SCALE_FACTOR,320/self.SCALE_FACTOR)
 
+	def tickVRAM(self):
+		for i in range(m(self.resolution())):
+			c = self.memory[0xCA7F+i]
+			c = c & len(gsp)
+#			print(i,c)
+			try:
+				self.plotPixel(xy(i,self.resolution()),gsp[c])
+			except IndexError as e:
+				self.plotPixel(xy(i,self.resolution()),(255,255,255))
+
+
 	"""Initialize variables"""
 	def init(self):
 		self.ms = self.screencontrol.newSurface(480,320)
 	#	print(self.resolution())
 		self.ms.fill((255,255,255))
-		self.plotPixel((0,0),(0,0,0))
-		self.plotPixel((1,0),(255,0,0))
 		#self.font = self.screencontrol.getFont("Arial")
 		self.delayframes = 0
 		#self.delayframes = 60
 		self.screencontrol.setTitle("Emulak")
 		self.memory = EmulakMemory()
+		self.memory[0xCA7F]=black
+		self.memory[0xCA7F+1]=red
+		self.memory[0xCA7F+2]=black
 		with open("input.bin","rb") as f:
 			self.memory.loadProg(map(ord,f.read()))
 		#self.memory.pc = 24576
@@ -355,6 +383,7 @@ class Emulak(BaseGame):
 
 	def plotPixel(self,l,c):
 		l = [n*self.SCALE_FACTOR for n in l]
+	#	l = list(l)
 		for yn in range(self.SCALE_FACTOR):
 			for xn in range(self.SCALE_FACTOR):
 				self.ms.set_at((l[0]+xn,l[1]+yn),c)
@@ -369,9 +398,9 @@ class Emulak(BaseGame):
 			if self.memory[0x0002]==1:
 				self.delayframes=self.memory[0x0001]
 				self.memory[0x0002]=0
-		if self.memory[0x0003]!=0 and (self.memory[0x0003]>=97 and self.memory[0x0003]<=122):
-			self.plotPixel((2,0),gsp[self.memory[0x0003]-97])
-			self.memory[0x0003]=0
+#		if self.memory[0x0003]!=0 and (self.memory[0x0003]>=97 and self.memory[0x0003]<=122):
+#			self.plotPixel((2,0),gsp[self.memory[0x0003]-97])
+#			self.memory[0x0003]=0
 		return
 
 	"""Called every frame."""
@@ -380,6 +409,7 @@ class Emulak(BaseGame):
 			self.delayframes-=1
 			self.memory[0x0001]=self.delayframes
 			return
+		self.tickVRAM()
 		self.screencontrol.fill((128,128,128))
 		self.screencontrol.blitSurface(self.ms,center(480,self.screencontrol.size[0]),center(320,self.screencontrol.size[1]))
 		self.screencontrol.finishDraw()
