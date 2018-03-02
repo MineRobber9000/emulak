@@ -20,11 +20,17 @@ def getgrayscale(s,v):
 	n = int(round(s*((v-97)+1)))
 	return (n,n,n)
 
-s = getgrayscalef(26)
-gsp = [getgrayscale(s,v) for v in range(122,98,-1)]
-black = len(gsp)-1
-red = len(gsp)
-gsp.append((255,0,0))
+#s = getgrayscalef(26)
+#gsp = [getgrayscale(s,v) for v in range(122,98,-1)]
+#black = len(gsp)-1
+#red = len(gsp)
+#gsp.append((255,0,0))
+gsp = [(0,0,0),(255,0,0),(0,255,0),(0,0,255),(255,255,255)][::-1]
+black = 4
+red = 3
+green = 2
+blue = 1
+white = 0
 
 class EmulakMemory:
 	def __init__(self,s=65535):
@@ -340,6 +346,9 @@ class Emulak(BaseGame):
 
 	SCALE_FACTOR = 16
 
+	# We need the empty ticks for a semblance of HW speed, so Emulak.EMPTY_TICKS = True
+	EMPTY_TICKS = True
+
 	def resolution(self):
 		return (480/self.SCALE_FACTOR,320/self.SCALE_FACTOR)
 
@@ -365,8 +374,8 @@ class Emulak(BaseGame):
 		self.screencontrol.setTitle("Emulak")
 		self.memory = EmulakMemory()
 		self.memory[0xCA7F]=black
-		self.memory[0xCA7F+1]=red
-		self.memory[0xCA7F+2]=black
+#		self.memory[0xCA7F+1]=red
+#		self.memory[0xCA7F+2]=black
 		with open("input.bin","rb") as f:
 			self.memory.loadProg(map(ord,f.read()))
 		#self.memory.pc = 24576
